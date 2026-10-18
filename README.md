@@ -1,80 +1,80 @@
 # classroom-sidecar
 
-A lightweight **sidecar system on AWS** that fills operational gaps for small franchise classrooms — without modifying the headquarters (HQ) system.
+小規模なフランチャイズ教室向けに、本部システムでは対応しきれない業務のすき間を補う、**AWS上の軽量な「サイドカー」システム**です。本部システムには一切手を加えません。
 
-> Status: early development
+> ステータス:開発初期段階
 
-## Why a sidecar?
+## なぜ「サイドカー」なのか
 
-Franchise classrooms run on an HQ-provided core system. It covers the standard workflow well, but some day-to-day needs of an individual classroom are out of its scope (for example, flexible notifications to parents).
+フランチャイズの教室は、本部が提供する基幹システムで運営されています。標準的な業務はそれで十分にまかなえますが、教室ごとの日々のニーズ(例:保護者への柔軟な連絡)には対応しきれない部分があります。
 
-Instead of changing or scraping the HQ system, this project runs **next to it**, like a motorcycle sidecar:
+本システムは、本部システムを改造したり、画面から自動でデータを取り出したりするのではなく、バイクの横に付くサイドカーのように**本部システムの隣で動きます**。
 
-- The HQ system stays the system of record for everything it already covers.
-- The sidecar only handles the gaps, with the minimum data it needs.
-- Data moves between them only through methods the HQ officially allows (e.g. manual export/import), never by automated login or scraping.
+- 本部システムがすでに扱っている情報は、引き続き本部システムを正とします。
+- サイドカーはすき間の業務だけを担い、必要最小限のデータしか持ちません。
+- 両者の間のデータの受け渡しは、本部が正式に認めている方法(手動での出力・取り込みなど)に限り、自動ログインやスクレイピングは行いません。
 
-This is the same pattern used in large enterprises, where a core ERP is complemented by small surrounding systems instead of being customized.
+これは大企業でもよく使われる考え方で、基幹システム(ERPなど)を作り込む代わりに、周辺の小さなシステムで補完するのと同じ構造です。
 
-## Planned features
+## 予定している機能
 
-- [ ] Student and guardian contact list (minimum fields only)
-- [ ] Email notifications to guardians (announcements, schedule changes)
-- [ ] Simple admin screen for the classroom owner (non-technical user)
-- [ ] Daily backup and restore procedure
+- [ ] 生徒・保護者の連絡先リスト(必要最小限の項目のみ)
+- [ ] 保護者へのメール配信(お知らせ、予定の変更など)
+- [ ] 教室の運営者(専門知識のない利用者)向けのシンプルな管理画面
+- [ ] 毎日のバックアップと復元手順
 
-## Architecture (initial)
+## 構成(初期案)
 
 ```
- Classroom owner ──HTTPS──▶  Amazon Lightsail instance
-                               ├─ Web app (admin screen)
-                               ├─ Database (student / guardian contacts)
-                               └─ Mail sending  ──▶ Guardians
-                                     │
-                     Daily DB dump ──▶ Lightsail bucket (encrypted)
+ 教室の運営者 ──HTTPS──▶  Amazon Lightsail インスタンス
+                            ├─ Webアプリ(管理画面)
+                            ├─ データベース(生徒・保護者の連絡先)
+                            └─ メール送信  ──▶ 保護者
+                                  │
+                 毎日のDBダンプ ──▶ Lightsail バケット(暗号化)
 ```
 
-Details will be updated as the implementation progresses.
+実装の進み具合に合わせて更新します。
 
-## Design principles
+## 設計方針
 
-The system handles personal data of children and their guardians, so the non-functional requirements drive the design.
+子どもと保護者の個人情報を扱うため、非機能要件を起点に設計しています。
 
-| Area | Approach |
+| 観点 | 方針 |
 | --- | --- |
-| Security | HTTPS only; only port 443 open to the internet; SSH restricted; least-privilege IAM; MFA on the AWS account and admin login |
-| Privacy | Store only the minimum fields needed to send notifications; obtain guardians' consent for the purpose of use |
-| Data at rest | Lightsail disks and snapshots are encrypted at rest by default |
-| Availability | Daily automatic snapshots (7-day retention) plus monthly manual snapshots for longer retention |
-| Recoverability | Daily database dump to a separate bucket; restore procedure tested periodically |
-| Cost | Single small Lightsail instance sized for one classroom; no always-on extra services |
-| Operability | Admin screen designed for a non-technical owner |
+| セキュリティ | HTTPSのみ。インターネットに開けるのは443番ポートだけ。SSHは接続元を制限。IAMは最小権限。AWSアカウントと管理画面には多要素認証(MFA) |
+| プライバシー | お知らせの送信に必要な最小限の項目だけを保存。保護者から利用目的の同意を得る |
+| 保存データの暗号化 | Lightsailのディスクとスナップショットは標準で暗号化 |
+| 可用性 | 毎日の自動スナップショット(7日分保持)に加え、長期保存用に月1回の手動スナップショット |
+| 復旧性 | データベースを毎日別のバケットへダンプ。復元手順を定期的に検証 |
+| コスト | 1教室分に見合う小さなLightsailインスタンス1台。常時稼働の追加サービスは使わない |
+| 運用性 | 専門知識のない運営者でも使える管理画面 |
 
-## Configuration
+## 設定
 
-Copy the template and fill in your own values. **Never commit the real `.env`.**
+ひな形をコピーして、自分の値を入れてください。**実際の`.env`は絶対にコミットしないでください。**
 
 ```
 cp .env.example .env
 ```
 
-Secrets (passwords, API keys, credentials) belong in `.env` on the server or in AWS Systems Manager Parameter Store — not in this repository.
+パスワード、APIキー、認証情報などの秘密情報は、サーバー上の`.env`か、AWS Systems Manager Parameter Storeに置き、このリポジトリには含めません。
 
-## What is NOT in this repository
+## このリポジトリに含めないもの
 
-This is a public repository. The following are intentionally kept out:
+このリポジトリは一般公開しています。以下は意図的に除外しています。
 
-- Any student or guardian data (real or exported)
-- Credentials, keys, and passwords
-- Environment-specific values (domain, allowed IP addresses, account IDs, bucket names)
-- Operational runbooks for the production environment
+- 生徒・保護者のデータ(本物も、書き出したものも)
+- 認証情報、キー、パスワード
+- 環境固有の値(ドメイン、許可するIPアドレス、アカウントID、バケット名)
+- 本番環境の運用手順書
 
-Sample data in this repository is always fictitious.
+このリポジトリに含まれるサンプルデータは、すべて架空のものです。
 
-## Disclaimer
+## 免責事項
 
-This is an independent personal project. It is not affiliated with, endorsed by, or connected to any franchise headquarters or brand.
+本プロジェクトは個人による独立したプロジェクトであり、特定のフランチャイズ本部やブランドとは一切関係がなく、承認や支援を受けたものではありません。
 
-## License
+## ライセンス
 
-MIT (see [LICENSE](LICENSE))
+MIT([LICENSE](LICENSE)を参照)
