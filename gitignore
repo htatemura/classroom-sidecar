@@ -1,0 +1,58 @@
+# ===== Secrets and environment-specific settings =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials
+.aws/
+secrets/
+config/local*
+config/production*
+
+# ===== Personal data (never commit student / guardian data) =====
+data/
+exports/
+imports/
+*.csv
+*.xlsx
+*.xls
+!samples/*.csv
+
+# ===== Databases and backups =====
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
+backups/
+dumps/
+
+# ===== Logs (may contain personal data) =====
+logs/
+*.log
+
+# ===== Infrastructure state (may contain account IDs / secrets) =====
+*.tfstate
+*.tfstate.*
+.terraform/
+cdk.out/
+
+# ===== Language / tooling =====
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+
+# ===== Editor / OS =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
